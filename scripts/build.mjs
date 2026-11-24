@@ -1,6 +1,6 @@
 // Gera o site estático em dist/ puxando os últimos vídeos do YouTube e posts do Substack.
 // Sem dependências: só Node 18+ (fetch nativo).
-import { mkdir, copyFile, writeFile } from "node:fs/promises";
+import { mkdir, copyFile, writeFile, readFile } from "node:fs/promises";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -211,7 +211,10 @@ async function playlistVideoIds(listId) {
   return new Set(ids);
 }
 
-async function main() {
+// Snapshot de fallback: usado quando a busca ao vivo falha (ex.: o Substack bloqueia IPs de datacenter com 403).
+const SNAPSHOT = join(ROOT, "data", "snapshot.json");
+
+async function fetchLive() {
   const [subXml, playlistIds] = await Promise.all([
     getText(SUBSTACK_FEED),
     playlistVideoIds(VIDEOS_PLAYLIST_ID),
@@ -219,7 +222,23 @@ async function main() {
   // Todos os itens da playlist, sem filtro, do episódio 20 pro 1.
   const videos = await Promise.all([...playlistIds].map((id) => videoInfo(id)));
   videos.sort((a, b) => episodeNumber(b.title) - episodeNumber(a.title));
-  const posts = parseSubstack(subXml);
+  return { videos, posts: parseSubstack(subXml) };
+}
+
+async function main() {
+  let data;
+  try {
+    data = await fetchLive();
+  } catch (err) {
+    console.warn(`AVISO: busca ao vivo falhou (${err.message}). Usando data/snapshot.json.`);
+    data = JSON.parse(await readFile(SNAPSHOT, "utf8"));
+  }
+  const { videos, posts } = data;
+  if (process.argv.includes("--save-snapshot")) {
+    await mkdir(dirname(SNAPSHOT), { recursive: true });
+    await writeFile(SNAPSHOT, JSON.stringify({ savedAt: new Date().toISOString(), videos, posts }, null, 2), "utf8");
+    console.log("Snapshot salvo em data/snapshot.json");
+  }
   if (!videos.length || !posts.length) throw new Error("Feed veio vazio: não publiquei nada.");
 
   const builtAt = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });

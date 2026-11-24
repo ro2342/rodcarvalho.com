@@ -21,6 +21,14 @@
 - Resultado do teste: 6 vídeos no Canal, incluindo títulos "Episódio 06", "Episódio 5" etc. que estão no canal mas fora da playlist.
 - Decisão do Rod: manter assim (só Shorts e a playlist saem). O link do YouTube Music do Rod Pod também fica como está.
 
+## 2026-11-24 — Publicado no GitHub Pages + ícones + snapshot de fallback
+- Ícones SVG (YouTube, Spotify, Apple Podcasts) nos botões do Rod Pod. São formas simples, não os logos oficiais.
+- Repositório criado: `ro2342/rodcarvalho.com` (público). Pages ativado com GitHub Actions. Link: https://ro2342.github.io/rodcarvalho.com/
+- O primeiro build no GitHub falhou: o feed do Substack respondeu 403 pros servidores do GitHub (bloqueio de IP). Corrigido com `data/snapshot.json`: se a busca ao vivo falhar, o build usa o snapshot e avisa no log.
+- Para atualizar o snapshot (depois de mudança grande): `node scripts/build.mjs --save-snapshot` e commitar `data/snapshot.json`.
+- `CNAME` removido por enquanto (domínio ainda não ligado). Voltar a criar quando o DNS estiver pronto.
+- `prints/` fora do git.
+
 ## 2026-11-24 — Carrossel de vídeos e embed do Spotify
 - Canal virou carrossel: 3 cards por vez no computador, 1 por vez no celular (84% da largura), com setas e arrastar com o dedo (scroll-snap, sem biblioteca).
 - Todos os 20 vídeos continuam no HTML; o carrossel só mostra um pedaço.

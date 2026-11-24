@@ -1,11 +1,13 @@
 # PROGRESS — rodcarvalho.com
 
+## Estado atual
+- Publicado: https://ro2342.github.io/rodcarvalho.com/ (repo `ro2342/rodcarvalho.com`, Pages via GitHub Actions).
+- Domínio rodcarvalho.com ainda NÃO ligado (CNAME removido por enquanto).
+
 ## Próximos passos
-1. Rod confirmar: tem o domínio rodcarvalho.com e acesso ao DNS? (passar registros pro GitHub Pages)
-2. Rod confirmar: criar repositório `ro2342/rodcarvalho.com` no GitHub (ainda não criado, nada publicado).
-3. Rod revisar o visual no navegador (ainda não foi aberto num browser).
-4. Ativar GitHub Pages (Settings → Pages → Source: GitHub Actions) e domínio personalizado.
-5. Rod dizer o que mudar no visual/textos.
+1. Rod revisar no celular (link acima) e dizer o que mudar.
+2. Rod confirmar: tem o domínio rodcarvalho.com e acesso ao DNS? Quando sim, recriar o arquivo `CNAME` e configurar os registros.
+3. Substack bloqueia o GitHub (403): o site usa `data/snapshot.json` quando isso acontece. Atualizar o snapshot de vez em quando.
 
 ## Decisões tomadas (2026-11-24)
 - Canal: vem da playlist "todos os episódios" (`PLTbG5pxygPvQAS__YHc7IBZLiMG2P7Agl`, são os vlogs), sem Shorts. Ver `ai/CHANGELOG.md`.
