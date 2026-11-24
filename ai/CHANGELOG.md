@@ -21,6 +21,9 @@
 - Resultado do teste: 6 vídeos no Canal, incluindo títulos "Episódio 06", "Episódio 5" etc. que estão no canal mas fora da playlist.
 - Decisão do Rod: manter assim (só Shorts e a playlist saem). O link do YouTube Music do Rod Pod também fica como está.
 
+## 2026-11-24 — Thumbs do YouTube em 16:9
+- Miniaturas dos vídeos do Canal passaram de 4:3 pra 16:9 (`aspect-ratio: 16 / 9`, `object-fit: cover`). Ficam mais baixas e sem as faixas pretas do 4:3.
+
 ## 2026-11-24 — Publicado no GitHub Pages + ícones + snapshot de fallback
 - Ícones SVG (YouTube, Spotify, Apple Podcasts) nos botões do Rod Pod. São formas simples, não os logos oficiais.
 - Repositório criado: `ro2342/rodcarvalho.com` (público). Pages ativado com GitHub Actions. Link: https://ro2342.github.io/rodcarvalho.com/
