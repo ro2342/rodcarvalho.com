@@ -1,0 +1,13 @@
+{
+  "name": "rodcarvalho-com",
+  "private": true,
+  "type": "module",
+  "version": "1.0.0",
+  "description": "Site pessoal do Rod: canal @rodindica, Rod Pod e Área de Transferência (Substack).",
+  "scripts": {
+    "build": "node scripts/build.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
