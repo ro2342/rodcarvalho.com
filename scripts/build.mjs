@@ -140,10 +140,10 @@ function renderPage({ videos, posts, builtAt }) {
       <p class="profile__bio">ctrl+c / ctrl+v do que eu vejo, leio e ouço.</p>
     </header>
 
-    <nav class="links" aria-label="Links">
-      <a class="link link--red" href="${LINKS.canal}" target="_blank" rel="noopener">${ICONS.youtube}<span>Canal @rodindica</span></a>
-      <a class="link link--pink" href="#podcast">${ICONS.spotify}<span>Rod Pod</span></a>
-      <a class="link link--yellow" href="${LINKS.substack}" target="_blank" rel="noopener">${ICONS.substack}<span>Área de Transferência</span></a>
+    <nav class="links" aria-label="Plataformas">
+      <a class="link link--red" href="${LINKS.canal}" target="_blank" rel="noopener">${ICONS.youtube}<span>YouTube</span></a>
+      <a class="link link--pink" href="${LINKS.podcastSpotify}" target="_blank" rel="noopener">${ICONS.spotify}<span>Spotify</span></a>
+      <a class="link link--yellow" href="${LINKS.substack}" target="_blank" rel="noopener">${ICONS.substack}<span>Substack</span></a>
     </nav>
 
     <section id="podcast" class="block">

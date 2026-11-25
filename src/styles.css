@@ -54,13 +54,14 @@ h1, h2 { margin: 0; font-family: "Archivo Black", Impact, sans-serif; text-trans
 }
 
 /* ---------- Links (botões empilhados) ---------- */
-.links { display: flex; flex-direction: column; gap: 14px; margin-top: 30px; }
+.links { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 30px; }
 
 .link {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 12px;
-  padding: 14px 20px;
+  gap: 8px;
+  padding: 16px 8px;
   font-family: "Archivo Black", sans-serif;
   font-size: 0.95rem;
   text-transform: uppercase;
@@ -68,11 +69,11 @@ h1, h2 { margin: 0; font-family: "Archivo Black", Impact, sans-serif; text-trans
   color: var(--ink);
   background: var(--paper);
   border: 3px solid var(--ink);
-  border-radius: 999px;
+  border-radius: 22px;
   box-shadow: 4px 4px 0 var(--ink);
   transition: transform 0.1s, box-shadow 0.1s;
 }
-.link span { flex: 1; text-align: center; padding-right: 2.4em; }
+.link span { font-size: 0.8rem; }
 .link:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--ink); }
 .link:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
 .link--red { background: var(--red); color: var(--paper); }
@@ -126,6 +127,7 @@ h1, h2 { margin: 0; font-family: "Archivo Black", Impact, sans-serif; text-trans
 
 .ico { width: 1.25em; height: 1.25em; flex: none; }
 .pill .ico, .link .ico { margin: 0; }
+.link .ico { width: 34px; height: 34px; }
 
 /* ---------- Carrossel de vídeos ---------- */
 .carousel {
