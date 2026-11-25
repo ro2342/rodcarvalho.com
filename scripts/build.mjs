@@ -1,4 +1,4 @@
-// Gera o site estático em dist/ puxando os últimos vídeos do YouTube e posts do Substack.
+// Gera o site estático em dist/: perfil + links (estilo link tree), Rod Pod, vídeos e posts.
 // Sem dependências: só Node 18+ (fetch nativo).
 import { mkdir, copyFile, writeFile, readFile } from "node:fs/promises";
 import { join, dirname } from "node:path";
@@ -6,13 +6,12 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const DIST = join(ROOT, "dist");
+const SNAPSHOT = join(ROOT, "data", "snapshot.json"); // fallback quando a busca ao vivo falha
 
 const SUBSTACK_FEED = "https://areadetransferencia.substack.com/feed";
 const UA = "Mozilla/5.0 (compatible; site-build)";
-const LIMIT = 6;
-
-// Playlist "todos os episódios": são os vídeos do canal (vlogs). É daqui que sai o bloco Canal.
-const VIDEOS_PLAYLIST_ID = "PLTbG5pxygPvQAS__YHc7IBZLiMG2P7Agl";
+const LIMIT = 6; // posts do Substack
+const VIDEOS_PLAYLIST_ID = "PLTbG5pxygPvQAS__YHc7IBZLiMG2P7Agl"; // "todos os episódios" = vlogs do canal
 // Cookie de consentimento: sem ele o YouTube responde com a tela de cookies em alguns IPs.
 const YT_HEADERS = {
   "User-Agent": UA,
@@ -49,6 +48,24 @@ const tag = (xml, name) => {
   return m ? decode(m[1]) : "";
 };
 
+function parseSubstack(xml) {
+  return [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)].slice(0, LIMIT).map(([, i]) => ({
+    title: tag(i, "title"),
+    url: tag(i, "link"),
+    date: tag(i, "pubDate"),
+  }));
+}
+
+// IDs dos vídeos da playlist, na ordem em que a página entrega.
+async function playlistVideoIds(listId) {
+  const res = await fetch(`https://www.youtube.com/playlist?list=${listId}`, { headers: YT_HEADERS });
+  if (!res.ok) throw new Error(`playlist ${listId} respondeu ${res.status}`);
+  const html = await res.text();
+  const ids = [...html.matchAll(/"videoId":"([A-Za-z0-9_-]{11})"/g)].map((m) => m[1]);
+  if (!ids.length) throw new Error(`playlist ${listId} sem vídeos: a página mudou?`);
+  return new Set(ids);
+}
+
 // Número do episódio no título ("... | episódio 20" -> 20). Sem número, vai pro fim.
 function episodeNumber(title = "") {
   const m = title.match(/epis[óo]dio\s*(\d+)/i);
@@ -62,22 +79,9 @@ async function videoInfo(id) {
   const data = res.ok ? await res.json() : {};
   return {
     url: `https://www.youtube.com/watch?v=${id}`,
-    thumb: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
+    thumb: `https://i.ytimg.com/vi/${id}/mqdefault.jpg`, // 320x180, 16:9
     title: data.title || id,
-    date: "",
   };
-}
-
-function parseSubstack(xml) {
-  return [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)].slice(0, LIMIT).map(([, i]) => {
-    const desc = tag(i, "description").replace(/<[^>]+>/g, "").trim();
-    return {
-      title: tag(i, "title"),
-      url: tag(i, "link"),
-      date: tag(i, "pubDate"),
-      excerpt: desc.length > 160 ? desc.slice(0, 157) + "..." : desc,
-    };
-  });
 }
 
 const esc = (s = "") =>
@@ -93,30 +97,27 @@ const ICONS = {
   youtube: `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="4" fill="currentColor"/><path d="M10 9.2v5.6l4.8-2.8z" fill="#fffdf6"/></svg>`,
   spotify: `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M6.8 9.4c3.4-1 7.2-.7 10 1M7.2 12.8c2.9-.8 5.8-.5 8 .9M7.8 16c2.2-.6 4.4-.4 6.1.7" stroke="#fffdf6" stroke-width="1.7" fill="none" stroke-linecap="round"/></svg>`,
   apple: `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9.5" r="2.8" fill="currentColor"/><path d="M12 12.3V19M9.5 19.5h5" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M7.4 9.5a4.6 4.6 0 0 0 9.2 0M5.2 9.5a6.8 6.8 0 0 0 13.6 0" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>`,
+  substack: `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="4" rx="1" fill="currentColor"/><path d="M4 9h16v12l-8-4.5L4 21z" fill="currentColor"/></svg>`,
 };
 
 function renderPage({ videos, posts, builtAt }) {
   const videoCards = videos
     .map(
       (v, i) => `
-      <a class="card card--video rot-${i % 4}" href="${esc(v.url)}" target="_blank" rel="noopener">
-        <span class="tape"></span>
-        <img src="${esc(v.thumb)}" alt="" loading="lazy" width="480" height="360">
-        <h3>${esc(v.title)}</h3>
-        <small>${esc(fmtDate(v.date))}</small>
-      </a>`
+          <a class="vcard rot-${i % 3}" href="${esc(v.url)}" target="_blank" rel="noopener">
+            <img src="${esc(v.thumb)}" alt="" loading="lazy" width="320" height="180">
+            <span class="vcard__title">${esc(v.title)}</span>
+          </a>`
     )
     .join("");
 
-  const postCards = posts
+  const postRows = posts
     .map(
-      (p, i) => `
-      <a class="card card--post rot-${(i + 1) % 4}" href="${esc(p.url)}" target="_blank" rel="noopener">
-        <span class="tape"></span>
-        <small>${esc(fmtDate(p.date))}</small>
-        <h3>${esc(p.title)}</h3>
-        <p>${esc(p.excerpt)}</p>
-      </a>`
+      (p) => `
+          <a class="prow" href="${esc(p.url)}" target="_blank" rel="noopener">
+            <span class="prow__title">${esc(p.title)}</span>
+            <small>${esc(fmtDate(p.date))}</small>
+          </a>`
     )
     .join("");
 
@@ -125,7 +126,7 @@ function renderPage({ videos, posts, builtAt }) {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Rod Carvalho · ctrl+c / ctrl+v</title>
+  <title>Rod Carvalho</title>
   <meta name="description" content="Canal @rodindica, Rod Pod e Área de Transferência, a newsletter do Rod.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -133,60 +134,59 @@ function renderPage({ videos, posts, builtAt }) {
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header class="hero">
-    <div class="sticker sticker--ctrlc">ctrl + c</div>
-    <div class="sticker sticker--ctrlv">ctrl + v</div>
-    <h1 class="hero__title">ROD<br><span>CARVALHO</span></h1>
-    <p class="hero__sub">Semanalmente, um ctrl+c / ctrl+v do que eu tenho visto, lido e ouvido.</p>
-    <nav class="hero__nav">
-      <a class="btn btn--red" href="${LINKS.canal}" target="_blank" rel="noopener">Canal @rodindica</a>
-      <a class="btn" href="#podcast">Rod Pod</a>
-      <a class="btn btn--yellow" href="${LINKS.substack}" target="_blank" rel="noopener">Área de Transferência</a>
+  <main class="page">
+    <header class="profile">
+      <h1 class="profile__name">ROD<br><span>CARVALHO</span></h1>
+      <p class="profile__bio">ctrl+c / ctrl+v do que eu vejo, leio e ouço.</p>
+    </header>
+
+    <nav class="links" aria-label="Links">
+      <a class="link link--red" href="${LINKS.canal}" target="_blank" rel="noopener">${ICONS.youtube}<span>Canal @rodindica</span></a>
+      <a class="link link--pink" href="#podcast">${ICONS.spotify}<span>Rod Pod</span></a>
+      <a class="link link--yellow" href="${LINKS.substack}" target="_blank" rel="noopener">${ICONS.substack}<span>Área de Transferência</span></a>
     </nav>
-  </header>
 
-  <main>
-    <section id="canal" class="block">
-      <h2 class="block__title"><span class="marker">Canal</span> no YouTube</h2>
-      <div class="carousel" data-carousel>
-        <button class="carousel__btn" data-prev aria-label="Vídeo anterior">&#8249;</button>
-        <div class="carousel__track">${videoCards}</div>
-        <button class="carousel__btn" data-next aria-label="Próximo vídeo">&#8250;</button>
-      </div>
-      <p class="center"><a class="btn btn--red" href="${LINKS.canal}" target="_blank" rel="noopener">Ver todos os vídeos</a></p>
-    </section>
-
-    <section id="podcast" class="block block--pink">
-      <h2 class="block__title"><span class="marker">Rod Pod</span></h2>
-      <div class="paper podcast">
-        <span class="tape tape--big"></span>
-        <p>O podcast, em todas as plataformas.</p>
+    <section id="podcast" class="block">
+      <h2 class="tag">ROD POD - O podcast do Rod!</h2>
+      <div class="paper">
         <iframe class="podcast__embed" title="Rod Pod no Spotify" src="https://open.spotify.com/embed/show/6tbW4A6KqD44Z6zqkJipN4?utm_source=generator" width="100%" height="232" frameborder="0" allowfullscreen allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy" style="border-radius:12px"></iframe>
-        <div class="podcast__links">
-          <a class="btn" href="${LINKS.podcastYouTube}" target="_blank" rel="noopener">${ICONS.youtube} YouTube Music</a>
-          <a class="btn" href="${LINKS.podcastSpotify}" target="_blank" rel="noopener">${ICONS.spotify} Spotify</a>
-          <a class="btn" href="${LINKS.podcastApple}" target="_blank" rel="noopener">${ICONS.apple} Apple Podcasts</a>
+        <div class="platforms">
+          <a class="pill" href="${LINKS.podcastYouTube}" target="_blank" rel="noopener">${ICONS.youtube} YouTube Music</a>
+          <a class="pill" href="${LINKS.podcastSpotify}" target="_blank" rel="noopener">${ICONS.spotify} Spotify</a>
+          <a class="pill" href="${LINKS.podcastApple}" target="_blank" rel="noopener">${ICONS.apple} Apple Podcasts</a>
         </div>
       </div>
     </section>
 
-    <section id="substack" class="block">
-      <h2 class="block__title"><span class="marker">Área de Transferência</span> no Substack</h2>
-      <div class="grid">${postCards}</div>
-      <p class="center"><a class="btn btn--yellow" href="${LINKS.substack}" target="_blank" rel="noopener">Assinar a newsletter</a></p>
+    <section id="videos" class="block">
+      <h2 class="tag">Vídeos</h2>
+      <div class="carousel" data-carousel>
+        <button class="carousel__btn" data-prev aria-label="Vídeo anterior">&#8249;</button>
+        <div class="carousel__track">${videoCards}
+        </div>
+        <button class="carousel__btn" data-next aria-label="Próximo vídeo">&#8250;</button>
+      </div>
+      <p class="center"><a class="pill" href="${LINKS.canal}" target="_blank" rel="noopener">Ver todos no canal</a></p>
     </section>
-  </main>
 
-  <footer class="footer">
-    <p>Feito meio torto, de propósito. Atualizado em ${esc(builtAt)}.</p>
-  </footer>
+    <section id="posts" class="block">
+      <h2 class="tag">Área de Transferência</h2>
+      <div class="prows">${postRows}
+      </div>
+      <p class="center"><a class="pill" href="${LINKS.substack}" target="_blank" rel="noopener">Assinar a newsletter</a></p>
+    </section>
+
+    <footer class="footer">
+      <p>Atualizado em ${esc(builtAt)}</p>
+    </footer>
+  </main>
   <script>
     // Carrossel: anda um card por clique. No celular, o arrastar com o dedo já funciona pelo CSS.
     document.querySelectorAll("[data-carousel]").forEach(function (box) {
       var track = box.querySelector(".carousel__track");
       function step() {
-        var item = track.querySelector(".card");
-        return item ? item.offsetWidth + 26 : 300;
+        var item = track.querySelector(".vcard");
+        return item ? item.offsetWidth + 14 : 200;
       }
       box.querySelector("[data-prev]").addEventListener("click", function () {
         track.scrollBy({ left: -step(), behavior: "smooth" });
@@ -200,19 +200,6 @@ function renderPage({ videos, posts, builtAt }) {
 </html>
 `;
 }
-
-// IDs dos vídeos da playlist. Se a página mudar e vier vazia, falha o build (o site antigo continua no ar).
-async function playlistVideoIds(listId) {
-  const res = await fetch(`https://www.youtube.com/playlist?list=${listId}`, { headers: YT_HEADERS });
-  if (!res.ok) throw new Error(`playlist ${listId} respondeu ${res.status}`);
-  const html = await res.text();
-  const ids = [...html.matchAll(/"videoId":"([A-Za-z0-9_-]{11})"/g)].map((m) => m[1]);
-  if (!ids.length) throw new Error(`playlist ${listId} sem vídeos: a página mudou?`);
-  return new Set(ids);
-}
-
-// Snapshot de fallback: usado quando a busca ao vivo falha (ex.: o Substack bloqueia IPs de datacenter com 403).
-const SNAPSHOT = join(ROOT, "data", "snapshot.json");
 
 async function fetchLive() {
   const [subXml, playlistIds] = await Promise.all([

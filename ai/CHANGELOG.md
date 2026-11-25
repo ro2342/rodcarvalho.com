@@ -21,6 +21,14 @@
 - Resultado do teste: 6 vídeos no Canal, incluindo títulos "Episódio 06", "Episódio 5" etc. que estão no canal mas fora da playlist.
 - Decisão do Rod: manter assim (só Shorts e a playlist saem). O link do YouTube Music do Rod Pod também fica como está.
 
+## 2026-11-25 — Layout link tree
+- Página reescrita em coluna central (560px): nome e bio no topo, três botões empilhados (Canal @rodindica, Rod Pod, Área de Transferência).
+- Bloco "ROD POD - O podcast do Rod!" com embed do Spotify e botões YouTube Music, Spotify e Apple Podcasts (com ícones).
+- Vídeos: carrossel menor, 3 visíveis no computador e 2 no celular, miniaturas 16:9 (`mqdefault`, 320x180).
+- Posts do Substack viraram linhas compactas.
+- Removidos textos de explicação ("Feito meio torto, de propósito", "O podcast, em todas as plataformas", "no YouTube", "no Substack").
+- Botões do carrossel agora são pílulas, não quadrados.
+
 ## 2026-11-24 — Thumbs do YouTube em 16:9
 - Miniaturas dos vídeos do Canal passaram de 4:3 pra 16:9 (`aspect-ratio: 16 / 9`, `object-fit: cover`). Ficam mais baixas e sem as faixas pretas do 4:3.
 - Primeira tentativa não funcionou no celular: o HTML traz `height="360"` na imagem, e isso vence o `aspect-ratio`. Corrigido com `height: auto` no CSS. Conferido com render em 390px.

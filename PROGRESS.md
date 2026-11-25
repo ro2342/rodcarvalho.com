@@ -18,6 +18,7 @@
 - 2026-11-24 — Canal filtrado: sem Shorts e sem a playlist "todos os episódios". Detalhes em `ai/CHANGELOG.md`.
 - 2026-11-24 — Canal com os 20 vídeos da playlist, do 20 ao 1. Detalhes em `ai/CHANGELOG.md`.
 - 2026-11-24 — Carrossel de vídeos (3 no PC, 1 no celular) e embed do Spotify. Detalhes em `ai/CHANGELOG.md`.
+- 2026-11-25 — Layout link tree: perfil, botões empilhados, Rod Pod com título novo, vídeos e posts menores. Detalhes em `ai/CHANGELOG.md`.
 
 ## Pendente do Rod
 - "Os links do blog": definir o que ele quer (página de blog no site ou outro formato).
