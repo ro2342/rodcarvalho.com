@@ -23,6 +23,7 @@
 
 ## 2026-11-24 — Thumbs do YouTube em 16:9
 - Miniaturas dos vídeos do Canal passaram de 4:3 pra 16:9 (`aspect-ratio: 16 / 9`, `object-fit: cover`). Ficam mais baixas e sem as faixas pretas do 4:3.
+- Primeira tentativa não funcionou no celular: o HTML traz `height="360"` na imagem, e isso vence o `aspect-ratio`. Corrigido com `height: auto` no CSS. Conferido com render em 390px.
 
 ## 2026-11-24 — Publicado no GitHub Pages + ícones + snapshot de fallback
 - Ícones SVG (YouTube, Spotify, Apple Podcasts) nos botões do Rod Pod. São formas simples, não os logos oficiais.

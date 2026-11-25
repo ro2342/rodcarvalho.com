@@ -157,6 +157,7 @@ main { padding: 40px 20px 60px; max-width: 1140px; margin: 0 auto; }
 
 .card img {
   width: 100%;
+  height: auto; /* o HTML traz height="360"; sem isto ele vence o aspect-ratio */
   aspect-ratio: 16 / 9;
   object-fit: cover;
   border: 3px solid var(--ink);
